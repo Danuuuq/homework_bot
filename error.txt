@@ -1,0 +1,270 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-7.1.3, pluggy-1.5.0 -- D:\developer\api\homework_bot\venv\Scripts\python.exe
+rootdir: D:\developer\api\homework_bot, configfile: pytest.ini, testpaths: tests/
+plugins: timeout-2.1.0
+timeout: 2.0s
+timeout method: thread
+timeout func_only: False
+collecting ... collected 25 items
+
+tests/test_bot.py::TestHomework::test_homework_const PASSED              [  4%]
+tests/test_bot.py::TestHomework::test_bot_init_not_global PASSED         [  8%]
+tests/test_bot.py::TestHomework::test_logger PASSED                      [ 12%]
+tests/test_bot.py::TestHomework::test_request_call PASSED                [ 16%]
+tests/test_bot.py::TestHomework::test_get_api_answers PASSED             [ 20%]
+tests/test_bot.py::TestHomework::test_get_not_200_status_response[mocked_response0] PASSED [ 24%]
+tests/test_bot.py::TestHomework::test_get_not_200_status_response[mocked_response1] PASSED [ 28%]
+tests/test_bot.py::TestHomework::test_get_not_200_status_response[mocked_response2] PASSED [ 32%]
+tests/test_bot.py::TestHomework::test_get_api_answer_with_request_exception PASSED [ 36%]
+tests/test_bot.py::TestHomework::test_parse_status_with_expected_statuses FAILED [ 40%]
+tests/test_bot.py::TestHomework::test_parse_status_with_unknown_status PASSED [ 44%]
+tests/test_bot.py::TestHomework::test_parse_status_no_homework_name_key PASSED [ 48%]
+tests/test_bot.py::TestHomework::test_check_response PASSED              [ 52%]
+tests/test_bot.py::TestHomework::test_check_invalid_response[response0] PASSED [ 56%]
+tests/test_bot.py::TestHomework::test_check_invalid_response[response1] PASSED [ 60%]
+tests/test_bot.py::TestHomework::test_check_invalid_response[response2] FAILED [ 64%]
+tests/test_bot.py::TestHomework::test_send_message PASSED                [ 68%]
+tests/test_bot.py::TestHomework::test_bot_initialized_in_main PASSED     [ 72%]
+tests/test_bot.py::TestHomework::test_main_without_env_vars_raise_exception PASSED [ 76%]
+tests/test_bot.py::TestHomework::test_main_send_request_to_api PASSED    [ 80%]
+tests/test_bot.py::TestHomework::test_main_check_response_is_called PASSED [ 84%]
+tests/test_bot.py::TestHomework::test_main_send_message_with_new_status FAILED [ 88%]
+tests/test_bot.py::TestHomework::test_main_log_response_whithout_homeworks PASSED [ 92%]
+tests/test_bot.py::TestHomework::test_main_send_message_with_telegram_exception PASSED [ 96%]
+tests/test_bot.py::TestHomework::test_docstrings PASSED                  [100%]
+
+================================== FAILURES ===================================
+____________ TestHomework.test_parse_status_with_expected_statuses ____________
+
+self = <test_bot.TestHomework object at 0x000002361C8D3650>
+homework_module = <module 'homework' from 'D:\\developer\\api\\homework_bot\\homework.py'>
+
+    def test_parse_status_with_expected_statuses(self, homework_module):
+        func_name = 'parse_status'
+        check_utils.check_function(
+            homework_module,
+            func_name,
+            self.HOMEWORK_FUNC_WITH_PARAMS_QTY[func_name]
+        )
+    
+        test_data = {
+            "id": 123,
+            "homework_name": "Homework test",
+            "reviewer_comment": "Всё нравится",
+            "date_updated": "2020-02-13T14:40:57Z",
+            "lesson_name": "Итоговый проект"
+        }
+        for status_key in self.HOMEWORK_VERDICTS.keys():
+            test_data['status'] = status_key
+    
+            result = homework_module.parse_status(test_data)
+            assert isinstance(result, str), (
+                f'Проверьте, что функция `{func_name}` возвращает строку.'
+            )
+>           assert result.startswith(
+                'Изменился статус проверки работы '
+                f'"{test_data["homework_name"]}"'
+            ), (
+                f'Проверьте, что в ответе функции `{func_name}` содержится '
+                'название домашней работы.'
+            )
+E           AssertionError: Проверьте, что в ответе функции `parse_status` содержится название домашней работы.
+E           assert False
+E            +  where False = <built-in method startswith of str object at 0x000002361C8A4DB0>('Изменился статус проверки работы "Homework test"')
+E            +    where <built-in method startswith of str object at 0x000002361C8A4DB0> = 'Изменился статус проверки работы "Итоговый проект". Работа проверена: ревьюеру всё понравилось. Ура!'.startswith
+
+tests\test_bot.py:307: AssertionError
+_____________ TestHomework.test_check_invalid_response[response2] _____________
+
+self = <test_bot.TestHomework object at 0x000002361C8DE090>
+response = InvalidResponse(data={'homeworks': {'homework_name': 'hw123', 'status': 'approved'}, 'current_date': 123246}, defected_key=None)
+homework_module = <module 'homework' from 'D:\\developer\\api\\homework_bot\\homework.py'>
+
+    @pytest.mark.parametrize('response', INVALID_RESPONSES.values())
+    def test_check_invalid_response(self, response, homework_module):
+        func_name = 'check_response'
+        check_utils.check_function(
+            homework_module,
+            func_name,
+            self.HOMEWORK_FUNC_WITH_PARAMS_QTY[func_name]
+        )
+    
+        if response.defected_key:
+            try:
+                homework_module.check_response(response.data)
+            except KeyError as e:
+                if repr(e) == f"KeyError('{response.defected_key}')":
+                    raise AssertionError(
+                        f'Убедитесь, что функция `{func_name}` выбрасывает '
+                        'исключение, если в ответе API домашки нет ключа '
+                        f'`{response.defected_key}`.'
+                    ) from e
+            except Exception:
+                pass
+            else:
+                raise AssertionError(
+                    f'Убедитесь, что функция `{func_name}` выбрасывает '
+                    'исключение, если в ответе API домашки нет ключа '
+                    f'`{response.defected_key}`.'
+                )
+        else:
+            assert_message = (
+                f'Убедитесь, что функция `{func_name}` выбрасывает исключение '
+                '`TypeError`, если в ответе API домашки '
+                'под ключом `homeworks` '
+                'данные приходят не в виде списка.'
+            )
+            if isinstance(response.data, list):
+                assert_message = (
+                    f'Убедитесь, что функция `{func_name}` выбрасывает '
+                    'исключение `TypeError` в случае, если в ответе API '
+                    'структура данных не соответствует ожиданиям: например, '
+                    'получен список вместо ожидаемого словаря.'
+                )
+            try:
+                homework_module.check_response(response.data)
+            except TypeError:
+                pass
+            except Exception:
+                raise AssertionError(assert_message)
+            else:
+>               raise AssertionError(assert_message)
+E               AssertionError: Убедитесь, что функция `check_response` выбрасывает исключение `TypeError`, если в ответе API домашки под ключом `homeworks` данные приходят не в виде списка.
+
+tests\test_bot.py:462: AssertionError
+_____________ TestHomework.test_main_send_message_with_new_status _____________
+
+self = <test_bot.TestHomework object at 0x000002361C8E4AD0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002361C9908D0>
+random_timestamp = 1000198103, current_timestamp = 1723400126
+random_message = 'XdvTKDKMPmkkguq'
+caplog = <_pytest.logging.LogCaptureFixture object at 0x000002361C990F10>
+homework_module = <module 'homework' from 'D:\\developer\\api\\homework_bot\\homework.py'>
+data_with_new_hw_status = {'current_date': 1000198103, 'homeworks': [{'date_updated': '2021-04-11T10:31:09Z', 'homework_name': 'hw123.zip', 'id': 777777777, 'lesson_name': 'Проект спринта: Деплой бота', ...}]}
+
+    def test_main_send_message_with_new_status(
+            self, monkeypatch, random_timestamp, current_timestamp,
+            random_message, caplog, homework_module, data_with_new_hw_status
+    ):
+        self.mock_main(
+            monkeypatch,
+            random_message,
+            random_timestamp,
+            current_timestamp,
+            homework_module,
+            response_data=data_with_new_hw_status
+        )
+    
+        hw_status = data_with_new_hw_status['homeworks'][0]['status']
+    
+        def mock_send_message(bot, message=''):
+            logging.warn(message)
+    
+        monkeypatch.setattr(
+            homework_module,
+            'send_message',
+            mock_send_message
+        )
+        with caplog.at_level(logging.WARN):
+            try:
+>               homework_module.main()
+
+tests\test_bot.py:738: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def main():
+        """Основная логика работы бота."""
+        check_tokens()
+        bot = TeleBot(TELEGRAM_TOKEN)
+        # timestamp = int(time.time())
+        timestamp = 0
+        while True:
+            try:
+                response = get_api_answer(timestamp)
+                homework, timestamp = check_response(response)
+                message = parse_status(homework)
+            except Exception as error:
+                message = f'Сбой в работе программы: {error}'
+                logger.error(message)
+                send_message(bot, message)
+            else:
+                if message is None:
+                    continue
+                send_message(bot, message)
+            finally:
+>               time.sleep(RETRY_PERIOD)
+
+homework.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+secs = 600
+
+    def sleep_to_interrupt(secs):
+        caller = inspect.stack()[1].function
+        if caller != 'main':
+            old_sleep(secs)
+            return
+        assert secs == 600, (
+            'Убедитесь, что повторный запрос к API домашки отправляется '
+            'через 10 минут: `time.sleep(RETRY_PERIOD)`.'
+        )
+>       raise check_utils.BreakInfiniteLoop('break')
+E       tests.check_utils.BreakInfiniteLoop: break
+
+tests\test_bot.py:566: BreakInfiniteLoop
+
+During handling of the above exception, another exception occurred:
+
+self = <test_bot.TestHomework object at 0x000002361C8E4AD0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002361C9908D0>
+random_timestamp = 1000198103, current_timestamp = 1723400126
+random_message = 'XdvTKDKMPmkkguq'
+caplog = <_pytest.logging.LogCaptureFixture object at 0x000002361C990F10>
+homework_module = <module 'homework' from 'D:\\developer\\api\\homework_bot\\homework.py'>
+data_with_new_hw_status = {'current_date': 1000198103, 'homeworks': [{'date_updated': '2021-04-11T10:31:09Z', 'homework_name': 'hw123.zip', 'id': 777777777, 'lesson_name': 'Проект спринта: Деплой бота', ...}]}
+
+    def test_main_send_message_with_new_status(
+            self, monkeypatch, random_timestamp, current_timestamp,
+            random_message, caplog, homework_module, data_with_new_hw_status
+    ):
+        self.mock_main(
+            monkeypatch,
+            random_message,
+            random_timestamp,
+            current_timestamp,
+            homework_module,
+            response_data=data_with_new_hw_status
+        )
+    
+        hw_status = data_with_new_hw_status['homeworks'][0]['status']
+    
+        def mock_send_message(bot, message=''):
+            logging.warn(message)
+    
+        monkeypatch.setattr(
+            homework_module,
+            'send_message',
+            mock_send_message
+        )
+        with caplog.at_level(logging.WARN):
+            try:
+                homework_module.main()
+            except check_utils.BreakInfiniteLoop:
+                log_record = [
+                    record.message for record in caplog.records
+                    if self.HOMEWORK_VERDICTS[hw_status] in record.message
+                ]
+>               assert log_record, (
+                    'Убедитесь, что при изменении статуса домашней работы '
+                    'бот отправляет в Telegram сообщение с вердиктом '
+                    'из переменной `HOMEWORK_VERDICTS`.'
+                )
+E               AssertionError: Убедитесь, что при изменении статуса домашней работы бот отправляет в Telegram сообщение с вердиктом из переменной `HOMEWORK_VERDICTS`.
+E               assert []
+
+tests\test_bot.py:744: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_bot.py::TestHomework::test_parse_status_with_expected_statuses
+FAILED tests/test_bot.py::TestHomework::test_check_invalid_response[response2]
+FAILED tests/test_bot.py::TestHomework::test_main_send_message_with_new_status
+======================== 3 failed, 22 passed in 0.24s =========================
