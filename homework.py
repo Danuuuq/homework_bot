@@ -40,7 +40,11 @@ class EndpointException(Exception):
 
 
 def check_tokens():
-    """Проверка доступности переменных."""
+    """Проверка доступности переменных.
+    
+    Проверка присвоения переменным значений из окружения
+    в случае отсутствия ссылки на переменную, выполнение остановится.
+    """
     for value in [
         ('PRACTICUM_TOKEN', PRACTICUM_TOKEN),
         ('TELEGRAM_TOKEN', TELEGRAM_TOKEN),
@@ -55,7 +59,11 @@ def check_tokens():
 
 
 def send_message(bot, message):
-    """Отправка сообщения пользователю."""
+    """Отправка сообщения пользователю.
+    
+    Отправка сообщений пользователю, логгируются
+    действия успешной и неуспешной отправки.
+    """
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
     except Exception as error:
@@ -65,34 +73,50 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    """Запрос к эндпоинту API."""
+    """Запрос к эндпоинту API.
+    
+    Проверка доступности эндпоинта и его ответа
+    в случае его доступности.
+    """
     payloads = {'from_date': timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payloads)
-    except Exception:
-        raise EndpointException(f'Эндпоинт {ENDPOINT} недоступен.')
-    else:
         if response.status_code != 200:
-            raise EndpointException(
-                f'Эндпоинт {ENDPOINT} недоступен. '
-                'Код ответа API: {response.status_code}'
-            )
+            raise EndpointException
+    except EndpointException:
+        raise EndpointException(f'Эндпоинт {ENDPOINT} недоступен. Код ответа API: {response.status_code}')
+    except Exception:
+        raise EndpointException(f'Ошибка при обращении к эндпоинту {ENDPOINT}.')
+    else:
         return response.json()
 
 
 def check_response(response):
-    """Проверка полученного ответа от API."""
-    try:
-        response.get('homeworks')
-    except TypeError:
-        raise EndpointException('Это не словарь')
-    except KeyError:
-        code = response['code']
-        raise EndpointException(
-            f'От эндпоинта {ENDPOINT} пришел ответ: {code}'
-        )
+    """Проверка полученного ответа от API.
+    
+    Проверка, что в ответе домашнее задание в списке хранится,
+    извлечение данных о домашке и текущего времени, для обновления.
+    """
+    homework = response['homeworks']
+    current_date = response['current_date']
+    if not isinstance(homework, list):
+        raise TypeError('Информация о домашней работе вернулась не в списке')
+    elif not homework:
+        logger.debug('Нового статуса домашней работы нет')
+        return None, current_date
     else:
-        return response.get('homeworks'), response.get('current_date')
+        return homework.pop(), current_date
+    
+    # try:
+    #     homework = response['homeworks'].pop()
+    #     current_date = response['current_date']
+    # except TypeError:
+    #     raise TypeError('Информация о домашней работе не в списке')
+    # except IndexError:
+    #     logger.debug('Нового статуса домашней работы нет')
+    #     return None, current_date
+    # else:
+    #     return homework, current_date
 
 
 def parse_status(homework):
@@ -118,17 +142,17 @@ def main():
         try:
             response = get_api_answer(timestamp)
             homework, timestamp = check_response(response)
-            message = parse_status(homework)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.error(message)
-            send_message(bot, message)
         else:
-            if message is None:
-                continue
-            send_message(bot, message)
+            print('he')
         finally:
-            time.sleep(RETRY_PERIOD)
+            if homework is None:
+                continue
+            message = parse_status(homework)
+            send_message(bot, message)
+            time.sleep(2)
 
 
 if __name__ == '__main__':
