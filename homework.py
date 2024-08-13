@@ -86,7 +86,7 @@ def get_api_answer(timestamp):
 def check_response(response):
     """Проверка полученного ответа от API.
 
-    Проверка, что в ответе домашнее задание в списке хранится,
+    Проверка, что в ответе домашнее задание хранится в списке,
     извлечение данных о домашке и текущего времени, для обновления.
     """
     try:
@@ -118,8 +118,8 @@ def parse_status(homework):
         message = (
             'Один из ключей словаря homework или HOMEWORK_VERDICTS недоступен'
         )
-        logger.error(message)
-        raise KeyError
+        # logger.error(message)
+        raise KeyError(message)
     else:
         return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
@@ -129,18 +129,22 @@ def main():
     check_tokens()
     bot = TeleBot(TELEGRAM_TOKEN)
     timestamp = int(time.time())
+    count_error = 0
     while True:
         try:
             response = get_api_answer(timestamp)
             homework, timestamp = check_response(response)
-        except Exception as error:
-            message = f'Сбой в работе программы: {error}'
-            logger.error(message)
-            send_message(bot, message)
-        else:
             if homework is not None:
                 message = parse_status(homework)
                 send_message(bot, message)
+        except Exception as error:
+            count_error += 1
+            message = f'Сбой в работе программы: {error}'
+            logger.error(message)
+            if count_error <= 1:
+                send_message(bot, message)
+        else:
+            count_error = 0
         finally:
             time.sleep(RETRY_PERIOD)
 
