@@ -14,7 +14,7 @@ TELEGRAM_TOKEN = os.getenv('TOKEN_TG')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
 
 RETRY_PERIOD = 600
-ENDPOINT = 'httpss://practicum.yandex.ru/api/user_api/homework_statuses/'
+ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
 HOMEWORK_VERDICTS = {
@@ -136,6 +136,7 @@ def main():
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.error(message)
+            send_message(bot, message)
         else:
             if homework is not None:
                 message = parse_status(homework)
