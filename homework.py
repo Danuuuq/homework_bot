@@ -9,7 +9,6 @@ from telebot import TeleBot
 
 load_dotenv()
 
-
 PRACTICUM_TOKEN = os.getenv('TOKEN_YA')
 TELEGRAM_TOKEN = os.getenv('TOKEN_TG')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
@@ -130,7 +129,6 @@ def main():
     check_tokens()
     bot = TeleBot(TELEGRAM_TOKEN)
     timestamp = int(time.time())
-    # timestamp = 0
     while True:
         try:
             response = get_api_answer(timestamp)
