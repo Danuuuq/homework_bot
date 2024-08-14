@@ -10,11 +10,11 @@
 class EmptyValueException(Exception):
     """Исключение для пустых переменных."""
 
-    def __init__(self, token):
-        self.token = token
+    def __init__(self, tokens):
+        self.tokens = tokens
 
     def __str__(self):
-        return f'Отсутствует обязательная переменная: {self.token}'
+        return f'Отсутствуют обязательные переменные: {self.tokens}'
 
 
 class EndpointException(Exception):
