@@ -61,13 +61,13 @@ def send_message(bot, message):
         logger.error(f'Ошибка при отправке сообщения: {error}')
     else:
         logger.debug(f'Бот отправил сообщение: "{message}"')
+        return message
 
 
 def get_api_answer(timestamp):
     """Запрос к эндпоинту API.
 
-    Проверка доступности эндпоинта и его ответа
-    в случае его доступности.
+    Проверка доступности эндпоинта и его ответа в случае его доступности.
     """
     payloads = {'from_date': timestamp}
     try:
@@ -109,12 +109,12 @@ def parse_status(homework):
         status = homework['status']
         homework_name = homework['homework_name']
     except KeyError as error:
-        message = (f'Ключ {error} отсутствует в ответе от API')
+        message = f'Ключ {error} отсутствует в ответе от API'
         raise KeyError(message)
     try:
         verdict = HOMEWORK_VERDICTS[status]
     except KeyError as error:
-        message = (f'Получен неожиданный статус домашней работы: {error}')
+        message = f'Получен неожиданный статус домашней работы: {error}'
         raise KeyError(message)
     else:
         return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -130,7 +130,7 @@ def main():
     check_tokens()
     bot = TeleBot(TELEGRAM_TOKEN)
     timestamp = int(time.time())
-    last_message = None
+    last_send_message = None
     while True:
         try:
             response = get_api_answer(timestamp)
@@ -145,9 +145,8 @@ def main():
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.error(message)
-            if last_message != message:
-                send_message(bot, message)
-                last_message = message
+            if last_send_message != message:
+                last_send_message = send_message(bot, message)
         time.sleep(RETRY_PERIOD)
 
 
